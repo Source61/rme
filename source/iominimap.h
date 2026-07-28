@@ -78,7 +78,7 @@ public:
 private:
 	bool saveOtmm(const wxFileName& file);
 	bool saveImage(const std::string& directory, const std::string& name);
-	bool exportMinimap(const std::string& directory);
+	bool exportMinimap(const std::string& directory, const std::string& name);
 	bool exportSelection(const std::string& directory, const std::string& name);
 	void readBlocks();
 	inline uint32_t getBlockIndex(const Position& pos) {

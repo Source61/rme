@@ -463,7 +463,7 @@ BEGIN_EVENT_TABLE(ExportMiniMapWindow, wxDialog)
 END_EVENT_TABLE()
 
 ExportMiniMapWindow::ExportMiniMapWindow(wxWindow* parent, Editor& editor) :
-	wxDialog(parent, wxID_ANY, "Export Minimap", wxDefaultPosition, wxSize(400, 300)),
+	wxDialog(parent, wxID_ANY, "Export Minimap", wxDefaultPosition, wxDefaultSize),
 	editor(editor)
 {
 	wxSizer* sizer = newd wxBoxSizer(wxVERTICAL);
@@ -477,7 +477,7 @@ ExportMiniMapWindow::ExportMiniMapWindow(wxWindow* parent, Editor& editor) :
 	sizer->Add(tmpsizer, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
 
 	// Output folder
-	directory_text_field = newd wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+	directory_text_field = newd wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(300, -1));
 	directory_text_field->Bind(wxEVT_KEY_UP, &ExportMiniMapWindow::OnDirectoryChanged, this);
 	directory_text_field->SetValue(wxString(g_settings.getString(Config::MINIMAP_EXPORT_DIR)));
 	tmpsizer = newd wxStaticBoxSizer(wxHORIZONTAL, this, "Output Folder");
@@ -486,8 +486,7 @@ ExportMiniMapWindow::ExportMiniMapWindow(wxWindow* parent, Editor& editor) :
 	sizer->Add(tmpsizer, 0, wxALL | wxEXPAND, 5);
 
 	// File name
-	wxString mapName(editor.getMap().getName().c_str(), wxConvUTF8);
-	file_name_text_field = newd wxTextCtrl(this, wxID_ANY, mapName.BeforeLast('.'), wxDefaultPosition, wxDefaultSize);
+	file_name_text_field = newd wxTextCtrl(this, wxID_ANY, "map", wxDefaultPosition, wxDefaultSize);
 	file_name_text_field->Bind(wxEVT_KEY_UP, &ExportMiniMapWindow::OnFileNameChanged, this);
 	tmpsizer = newd wxStaticBoxSizer(wxHORIZONTAL, this, "File Name");
 	tmpsizer->Add(file_name_text_field, 1, wxALL, 5);
@@ -498,9 +497,11 @@ ExportMiniMapWindow::ExportMiniMapWindow(wxWindow* parent, Editor& editor) :
 	format_choices.Add(".otmm (Client Minimap)");
 	format_choices.Add(".png (PNG Image)");
 	format_choices.Add(".bmp (Bitmap Image)");
-	format_options = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, format_choices);
+	format_options = newd wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, format_choices);
 	format_options->SetSelection(0);
+	tmpsizer = newd wxStaticBoxSizer(wxHORIZONTAL, this, "Format");
 	tmpsizer->Add(format_options, 1, wxALL, 5);
+	sizer->Add(tmpsizer, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
 
 	// Export options
 	wxArrayString choices;
@@ -527,8 +528,9 @@ ExportMiniMapWindow::ExportMiniMapWindow(wxWindow* parent, Editor& editor) :
 	tmpsizer->Add(newd wxButton(this, wxID_CANCEL, "Cancel"), wxSizerFlags(1).Center());
 	sizer->Add(tmpsizer, 0, wxCENTER, 10);
 
-	SetSizer(sizer);
-	Layout();
+	ok_button->SetDefault();
+
+	SetSizerAndFit(sizer);
 	Centre(wxBOTH);
 	CheckValues();
 }

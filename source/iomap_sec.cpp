@@ -48,6 +48,7 @@ std::map<int, IOMapSec::SecHouseArea> IOMapSec::houseAreas;
 bool IOMapSec::monsterTypesLoaded = false;
 std::map<int, IOMapSec::SecMonsterType> IOMapSec::monsterTypes;
 std::vector<IOMapSec::SecSpawnEntry> IOMapSec::spawnEntries;
+IOMapSec::SecMapBounds IOMapSec::mapBounds;
 
 // Case-insensitive string comparison
 static bool iequals(const std::string& a, const std::string& b) {
@@ -1359,6 +1360,39 @@ void IOMapSec::loadMonsterDb(const std::string& filepath) {
   }
 }
 
+void IOMapSec::loadMapDat(const std::string& filepath) {
+  mapBounds = SecMapBounds();
+  std::ifstream file(filepath);
+  if(!file.is_open()) return;
+
+  // Only the sector extents are of interest here; marks and start positions are ignored.
+  int sxMin = -1, sxMax = -1, syMin = -1, syMax = -1, szMin = -1, szMax = -1;
+  std::string line;
+  while(std::getline(file, line)) {
+    if(line.empty() || line[0] == '#') continue;
+    char key[32];
+    int value;
+    if(sscanf(line.c_str(), " %31[A-Za-z] = %d", key, &value) != 2) continue;
+    if(iequals(key, "SectorXMin")) sxMin = value;
+    else if(iequals(key, "SectorXMax")) sxMax = value;
+    else if(iequals(key, "SectorYMin")) syMin = value;
+    else if(iequals(key, "SectorYMax")) syMax = value;
+    else if(iequals(key, "SectorZMin")) szMin = value;
+    else if(iequals(key, "SectorZMax")) szMax = value;
+  }
+
+  if(sxMin < 0 || syMin < 0 || sxMax < sxMin || syMax < syMin) return;
+
+  // Sectors are 32x32 tiles, matching the sector_x * 32 + offset arithmetic in loadSectorFile.
+  mapBounds.minX = sxMin * 32;
+  mapBounds.maxX = sxMax * 32 + 31;
+  mapBounds.minY = syMin * 32;
+  mapBounds.maxY = syMax * 32 + 31;
+  mapBounds.minZ = szMin < 0 ? rme::MapMinLayer : std::max(szMin, rme::MapMinLayer);
+  mapBounds.maxZ = szMax < 0 ? rme::MapMaxLayer : std::min(szMax, rme::MapMaxLayer);
+  mapBounds.valid = true;
+}
+
 void IOMapSec::loadHouseAreas(const std::string& filepath) {
   houseAreas.clear();
   std::ifstream file(filepath);
@@ -1598,6 +1632,12 @@ bool IOMapSec::loadMap(Map& map, const FileName& identifier) {
         g_items.clientToServer[t.clientID] = sid;
       }
     }
+  }
+
+  // Load map geometry from root/dat/map.dat. Reset first: these statics outlive a single map load.
+  mapBounds = SecMapBounds();
+  if(!datDir.empty() && fs::exists(datDir + "map.dat")) {
+    loadMapDat(datDir + "map.dat");
   }
 
   // Load objects.srv from root/dat/

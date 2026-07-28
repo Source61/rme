@@ -174,6 +174,15 @@ public:
   static void loadHouses(Map& map, const std::string& filepath);
   static void saveHouses(Map& map, const std::string& filepath);
 
+  // Map geometry from map.dat (absolute tile coordinates, inclusive)
+  struct SecMapBounds {
+    int minX = 0, minY = 0, maxX = 0, maxY = 0;
+    int minZ = 0, maxZ = rme::MapMaxLayer;
+    bool valid = false;
+  };
+  static SecMapBounds mapBounds;
+  static void loadMapDat(const std::string& filepath);
+
   // Spawn data from monster.db
   struct SecSpawnEntry {
     int raceNumber = 0;
